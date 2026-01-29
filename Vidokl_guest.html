@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Фінальний рівень | Vidokl 15</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 800px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+            border: 2px solid #00ffff;
+            text-align: center;
+        }
+
+        h1 {
+            color: #00ffff;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        .subtitle {
+            color: #aaa;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .input-section {
+            margin: 30px 0;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 10px;
+            color: #00ffaa;
+            font-size: 1.2em;
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2em;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #00ffaa;
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+
+        .password-input:focus {
+            outline: none;
+            box-shadow: 0 0 15px #00ffaa;
+        }
+
+        .submit-btn {
+            background: linear-gradient(45deg, #00ffaa, #00aaff);
+            color: black;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.3em;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px #00ffaa;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .result-section {
+            margin-top: 40px;
+            padding: 30px;
+            background: rgba(0, 50, 50, 0.5);
+            border-radius: 15px;
+            border: 1px solid #00ffff;
+            animation: fadeIn 1s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .success-title {
+            color: #00ffaa;
+            font-size: 2em;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #00ffaa;
+        }
+
+        .success-message {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .notion-link {
+            display: inline-block;
+            background: linear-gradient(45deg, #ff0080, #00aaff);
+            color: white;
+            text-decoration: none;
+            padding: 18px 35px;
+            font-size: 1.3em;
+            font-weight: bold;
+            border-radius: 10px;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(255, 0, 128, 0.5);
+        }
+
+        .notion-link:hover {
+            transform: scale(1.08);
+            box-shadow: 0 0 25px rgba(255, 0, 128, 0.8);
+        }
+
+        .hint {
+            margin-top: 25px;
+            color: #aaa;
+            font-size: 0.9em;
+            font-style: italic;
+        }
+
+        .error-message {
+            color: #ff5555;
+            margin-top: 15px;
+            font-size: 1.1em;
+            text-shadow: 0 0 5px #ff5555;
+        }
+
+        .glitch-text {
+            animation: glitch 3s infinite;
+            color: #00ffff;
+        }
+
+        @keyframes glitch {
+            0% { text-shadow: 2px 2px 0 #ff00ff, -2px -2px 0 #00ffaa; }
+            50% { text-shadow: -2px 2px 0 #ff00ff, 2px -2px 0 #00ffaa; }
+            100% { text-shadow: 2px -2px 0 #ff00ff, -2px 2px 0 #00ffaa; }
+        }
+
+        footer {
+            margin-top: 40px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+            h1 {
+                font-size: 1.8em;
+            }
+            .password-input {
+                font-size: 1em;
+                padding: 12px;
+            }
+            .submit-btn {
+                padding: 12px 30px;
+                font-size: 1.1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="glitch-text">🔐 ФІНАЛЬНИЙ РІВЕНЬ</h1>
+        <p class="subtitle">Введи SHA-256 хеш для отримання доступу</p>
+        
+        <div class="input-section">
+            <label class="input-label">Хеш (64 символи):</label>
+            <input type="text" id="passwordInput" class="password-input" placeholder="Встав сюди свій хеш...">
+            <button onclick="checkPassword()" class="submit-btn">ПЕРЕВІРИТИ</button>
+            <div id="errorMessage" class="error-message"></div>
+        </div>
+        
+        <div id="resultSection" class="hidden">
+            <div class="result-section">
+                <h2 class="success-title">🎉 ВІТАЮ, VIDOKL! 🎉</h2>
+                <p class="success-message">
+                    Ти пройшов усі рівні та розгадав всі загадки!<br>
+                    Це твоя персональна сторінка з нагоди 15-річчя.<br>
+                    Натисни кнопку нижче, щоб відкрити свій подарунок:
+                </p>
+                <a href="https://www.notion.so/Vidokl-v15-0-2f7ba9d624688003aeb1e539b2ca2e7c?source=copy_link" 
+                   target="_blank" class="notion-link">
+                   📖 ВІДКРИТИ ПЕРСОНАЛЬНУ СТОРІНКУ
+                </a>
+                <p class="hint">Посилання відкриється в новій вкладці</p>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Спеціально для Vidokl | 15 років | Кодерський квест</p>
+        </footer>
+    </div>
+
+    <script>
+        // Правильний хеш (SHA-256 від "vidokl")
+        const correctHash = "aed755ec1e69a51de0510d7b2fcd6c8636acf06d7d718c0c835fdd9bc6088306";
+        
+        function checkPassword() {
+            const input = document.getElementById("passwordInput").value.trim();
+            const errorElement = document.getElementById("errorMessage");
+            const resultSection = document.getElementById("resultSection");
+            
+            // Очищаємо попередні повідомлення
+            errorElement.textContent = "";
+            resultSection.classList.add("hidden");
+            
+            // Перевірка на порожній ввід
+            if (!input) {
+                errorElement.textContent = "❗ Будь ласка, введи хеш";
+                return;
+            }
+            
+            // Перевірка довжини (SHA-256 має 64 символи)
+            if (input.length !== 64) {
+                errorElement.textContent = "❗ Хеш SHA-256 має містити рівно 64 символи";
+                return;
+            }
+            
+            // Перевірка з правильним хешем (нечутлива до регістру)
+            if (input.toLowerCase() === correctHash.toLowerCase()) {
+                // Успіх!
+                resultSection.classList.remove("hidden");
+                
+                // Плавна прокрутка до результату
+                resultSection.scrollIntoView({ behavior: 'smooth' });
+                
+                // Додаємо конфетті-ефект
+                createConfetti();
+            } else {
+                errorElement.textContent = "❌ Неправильний хеш! Спробуй ще раз";
+                
+                // Вібрування поля вводу при помилці
+                document.getElementById("passwordInput").style.animation = "shake 0.5s";
+                setTimeout(() => {
+                    document.getElementById("passwordInput").style.animation = "";
+                }, 500);
+            }
+        }
+        
+        // Дозволяємо натискати Enter у полі вводу
+        document.getElementById("passwordInput").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                checkPassword();
+            }
+        });
+        
+        // Простий конфетті-ефект
+        function createConfetti() {
+            const colors = ['#00ffff', '#00ffaa', '#ff0080', '#ffaa00', '#aa00ff'];
+            const container = document.querySelector('.container');
+            
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.style.position = 'absolute';
+                confetti.style.width = '10px';
+                confetti.style.height = '10px';
+                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.borderRadius = '50%';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.top = '-20px';
+                confetti.style.opacity = '0.8';
+                confetti.style.zIndex = '9999';
+                
+                container.appendChild(confetti);
+                
+                // Анімація падіння
+                const animation = confetti.animate([
+                    { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
+                    { transform: `translateY(${window.innerHeight}px) rotate(${Math.random() * 360}deg)`, opacity: 0 }
+                ], {
+                    duration: 2000 + Math.random() * 2000,
+                    easing: 'cubic-bezier(0.215, 0.610, 0.355, 1)'
+                });
+                
+                // Видаляємо після закінчення анімації
+                animation.onfinish = () => confetti.remove();
+            }
+        }
+        
+        // Додаємо анімацію тряски для поля вводу
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                20%, 40%, 60%, 80% { transform: translateX(5px); }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Автофокус на полі вводу при завантаженні
+        window.onload = function() {
+            document.getElementById("passwordInput").focus();
+        };
+    </script>
+</body>
+</html>
