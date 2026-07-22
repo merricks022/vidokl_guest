@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=1.5, minimum-scale=0.5">
+  <title>Mini Paint X • Рисование с кистями</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: linear-gradient(145deg, #2b2b3a 0%, #1a1a26 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      padding: 15px;
+    }
+    .paint-app {
+      background: #262634;
+      border-radius: 42px;
+      padding: 22px;
+      box-shadow: 0 25px 50px -8px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      width: fit-content;
+      max-width: 100%;
+    }
+    canvas {
+      display: block;
+      background: #ffffff;
+      border-radius: 32px;
+      box-shadow: 0 20px 35px rgba(0,0,0,0.7), inset 0 0 0 2px rgba(255,255,255,0.15);
+      width: 100%;
+      height: auto;
+      max-width: 800px;
+      aspect-ratio: 4 / 3;
+      cursor: crosshair;
+      touch-action: none; /* улучшает отклик на касаниях */
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      background: #2f2f3c;
+      padding: 16px 22px;
+      border-radius: 100px;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.5), 0 10px 18px rgba(0,0,0,0.5);
+    }
+    .brush-group, .action-group, .color-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+    button {
+      background: #3e3e52;
+      border: none;
+      color: #ececec;
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding: 10px 18px;
+      border-radius: 30px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.1);
+      letter-spacing: 0.4px;
+      white-space: nowrap;
+    }
+    button:hover {
+      background: #54547a;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 14px rgba(0,0,0,0.5);
+      color: white;
+    }
+    button.active {
+      background: #7b6ef0;
+      box-shadow: 0 0 16px #7b6ef0aa;
+      color: white;
+      font-weight: bold;
+    }
+    input[type="color"] {
+      width: 48px;
+      height: 48px;
+      border: 3px solid #4a4a62;
+      border-radius: 50%;
+      cursor: pointer;
+      background: transparent;
+      padding: 2px;
+      box-shadow: 0 4px 12px black;
+      transition: 0.2s;
+    }
+    input[type="color"]:hover {
+      border-color: #b3b3ff;
+      transform: scale(1.05);
+    }
+    input[type="range"] {
+      width: 85px;
+      cursor: pointer;
+      background: #3a3a4a;
+      height: 6px;
+      border-radius: 5px;
+      accent-color: #c0b9ff;
+    }
+    .size-value {
+      color: #ddd;
+      font-weight: bold;
+      min-width: 45px;
+      display: inline-block;
+      background: #23232e;
+      padding: 6px 10px;
+      border-radius: 20px;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    .brush-icon {
+      font-size: 1.2rem;
+      filter: drop-shadow(0 2px 4px black);
+    }
+    @media (max-width: 650px) {
+      .toolbar {
+        gap: 8px;
+        padding: 14px 14px;
+      }
+      button {
+        padding: 8px 14px;
+        font-size: 0.8rem;
+      }
+      input[type="range"] {
+        width: 65px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="paint-app">
+  <canvas id="drawCanvas" width="800" height="600"></canvas>
+
+  <div class="toolbar">
+    <div class="brush-group">
+      <button id="brushPen" class="active" title="Обычное перо (плавное)"><span class="brush-icon">✒️</span> Перо</button>
+      <button id="brushPencil" title="Карандаш (текстура)"><span class="brush-icon">✏️</span> Карандаш</button>
+      <button id="brushWatercolor" title="Акварель (полупрозрачная)"><span class="brush-icon">🖌️</span> Акварель</button>
+      <button id="brushAirbrush" title="Аэрограф (рассеивание)"><span class="brush-icon">🌫️</span> Аэрограф</button>
+      <button id="brushCalligraphy" title="Каллиграфия (наклон)"><span class="brush-icon">🖋️</span> Перо-кисть</button>
+      <button id="brushMarker" title="Маркер (полупрозрачный широкий)"><span class="brush-icon">🖍️</span> Маркер</button>
+    </div>
+
+    <div class="color-group">
+      <input type="color" id="colorPicker" value="#2d2d2d">
+      <span style="color:#ccc; margin:0 2px;">Размер</span>
+      <input type="range" id="brushSize" min="1" max="80" value="12" step="0.5">
+      <span id="sizeDisplay" class="size-value">12</span>
+    </div>
+
+    <div class="action-group">
+      <button id="clearCanvas" title="Очистить холст"><span>🗑️</span> Очистить</button>
+      <button id="undoBtn" title="Отменить последний штрих"><span>↩️</span> Отмена</button>
+      <button id="eraserBtn" title="Ластик (временный)"><span>🧽</span> Ластик</button>
+    </div>
+  </div>
+  <div style="color:#aaa; font-size:0.8rem; margin-top:-8px;">✨ Кисти как в Ibis Paint X: текстура, прозрачность, наклон</div>
+</div>
+
+<script>
+  (function() {
+    const canvas = document.getElementById('drawCanvas');
+    const ctx = canvas.getContext('2d', {
+      willReadFrequently: true // оптимизация для частого чтения пикселей (ластик/смешение)
+    });
+
+    // ---------- СОСТОЯНИЯ ----------
+    let painting = false;
+    let currentTool = 'pen'; // pen, pencil, watercolor, airbrush, calligraphy, marker, eraser
+    let brushColor = '#2d2d2d';
+    let brushSize = 12;
+    
+    // Для хранения истории отмены (сохраняем холст перед каждым штрихом)
+    let undoStack = [];
+    const MAX_UNDO = 25;
+
+    // Вспомогательные переменные для рисования
+    let lastX = 0, lastY = 0;
+    let currentStrokePoints = []; // используется для некоторых кистей (сглаживание/каллиграфия)
+
+    // ---------- ЭЛЕМЕНТЫ UI ----------
+    const penBtn = document.getElementById('brushPen');
+    const pencilBtn = document.getElementById('brushPencil');
+    const watercolorBtn = document.getElementById('brushWatercolor');
+    const airbrushBtn = document.getElementById('brushAirbrush');
+    const calligraphyBtn = document.getElementById('brushCalligraphy');
+    const markerBtn = document.getElementById('brushMarker');
+    const eraserBtn = document.getElementById('eraserBtn');
+    const clearBtn = document.getElementById('clearCanvas');
+    const undoBtn = document.getElementById('undoBtn');
+    const colorPicker = document.getElementById('colorPicker');
+    const brushSizeInput = document.getElementById('brushSize');
+    const sizeDisplay = document.getElementById('sizeDisplay');
+
+    // Все кнопки кистей (для сброса активного класса)
+    const brushButtons = [penBtn, pencilBtn, watercolorBtn, airbrushBtn, calligraphyBtn, markerBtn];
+
+    // ---------- ФУНКЦИИ ХОЛСТА И ИСТОРИИ ----------
+    function saveState() {
+      // сохраняем текущий холст в стек
+      if (undoStack.length >= MAX_UNDO) {
+        undoStack.shift(); // удаляем самый старый
+      }
+      undoStack.push(canvas.toDataURL());
+    }
+
+    function undoLast() {
+      if (undoStack.length === 0) {
+        // Можно оставить пустой холст, но лучше просто сообщить
+        alert("Нет действий для отмены");
+        return;
+      }
+      const previousState = undoStack.pop();
+      const img = new Image();
+      img.onload = function() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+      };
+      img.src = previousState;
+    }
+
+    function clearCanvasAndSave() {
+      saveState();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Устанавливаем белый фон, чтобы ластик/прозрачность работали корректно (как лист)
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // Инициализация белого фона при загрузке
+    function initializeCanvas() {
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Сохраняем начальное состояние (пустой белый лист)
+      undoStack = [];
+      saveState(); // чтобы можно было отменить к чистому листу
+    }
+
+    // ---------- АКТИВАЦИЯ ИНСТРУМЕНТОВ ----------
+    function setActiveTool(toolId, buttonElement) {
+      currentTool = toolId;
+      // Убираем активный класс у всех кнопок кистей и ластика
+      brushButtons.forEach(b => b.classList.remove('active'));
+      eraserBtn.classList.remove('active');
+      // Добавляем активный класс на нужную кнопку
+      if (buttonElement) {
+        buttonElement.classList.add('active');
+      }
+    }
+
+    // Обработчики кнопок кистей
+    penBtn.addEventListener('click', () => setActiveTool('pen', penBtn));
+    pencilBtn.addEventListener('click', () => setActiveTool('pencil', pencilBtn));
+    watercolorBtn.addEventListener('click', () => setActiveTool('watercolor', watercolorBtn));
+    airbrushBtn.addEventListener('click', () => setActiveTool('airbrush', airbrushBtn));
+    calligraphyBtn.addEventListener('click', () => setActiveTool('calligraphy', calligraphyBtn));
+    markerBtn.addEventListener('click', () => setActiveTool('marker', markerBtn));
+
+    // Ластик - временный инструмент, не кисть, но использует схожий принцип
+    eraserBtn.addEventListener('click', () => {
+      // Переключаем ластик: если уже активен ластик, возвращаемся на перо
+      if (currentTool === 'eraser') {
+        setActiveTool('pen', penBtn);
+      } else {
+        setActiveTool('eraser', eraserBtn);
+      }
+    });
+
+    // Очистка
+    clearBtn.addEventListener('click', clearCanvasAndSave);
+
+    // Отмена
+    undoBtn.addEventListener('click', undoLast);
+
+    // Цвет
+    colorPicker.addEventListener('input', (e) => {
+      brushColor = e.target.value;
+      // Если активен ластик, переключаем на перо при смене цвета (удобнее)
+      if (currentTool === 'eraser') {
+        setActiveTool('pen', penBtn);
+      }
+    });
+
+    // Размер кисти
+    brushSizeInput.addEventListener('input', (e) => {
+      brushSize = parseFloat(e.target.value);
+      sizeDisplay.textContent = brushSize;
+    });
+
+    // ---------- РИСОВАНИЕ: ОБРАБОТЧИКИ МЫШИ / КАСАНИЙ ----------
+    function getCanvasCoords(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;   // отношение реального размера к CSS
+      const scaleY = canvas.height / rect.height;
+
+      let clientX, clientY;
+
+      if (e.touches) {
+        // Сенсорное событие
+        if (e.touches.length === 0) return null;
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      }
+
+      // Преобразуем в координаты холста
+      const canvasX = (clientX - rect.left) * scaleX;
+      const canvasY = (clientY - rect.top) * scaleY;
+      return {
+        x: Math.min(Math.max(canvasX, 0), canvas.width),
+        y: Math.min(Math.max(canvasY, 0), canvas.height)
+      };
+    }
+
+    function startDrawing(e) {
+      e.preventDefault();
+      const coords = getCanvasCoords(e);
+      if (!coords) return;
+
+      // Сохраняем состояние перед началом нового штриха
+      saveState();
+
+      painting = true;
+      lastX = coords.x;
+      lastY = coords.y;
+      currentStrokePoints = [{x: lastX, y: lastY}];
+
+      // Для некоторых кистей (аэрограф, карандаш) рисуем точку сразу
+      drawBrush(ctx, lastX, lastY, lastX, lastY, brushColor, brushSize, currentTool);
+    }
+
+    function drawMove(e) {
+      e.preventDefault();
+      if (!painting) return;
+      const coords = getCanvasCoords(e);
+      if (!coords) return;
+
+      const currentX = coords.x;
+      const currentY = coords.y;
+
+      // Сохраняем точки для каллиграфии/сглаживания
+      currentStrokePoints.push({x: currentX, y: currentY});
+      
+      // Рисуем линию между последней и текущей точкой с использованием выбранной кисти
+      drawBrush(ctx, lastX, lastY, currentX, currentY, brushColor, brushSize, currentTool);
+
+      lastX = currentX;
+      lastY = currentY;
+    }
+
+    function stopDrawing(e) {
+      if (!painting) return;
+      painting = false;
+      currentStrokePoints = [];
+      // Дополнительно можно сгладить, но основная работа сделана
+    }
+
+    // ---------- ЯДРО: РАЗЛИЧНЫЕ КИСТИ (имитация Ibis Paint) ----------
+    function drawBrush(context, fromX, fromY, toX, toY, color, size, tool) {
+      // Если ластик — используем цвет фона (белый) и специальный режим
+      let drawColor = color;
+      let compositeOp = 'source-over';
+      let globalAlpha = 1.0;
+
+      if (tool === 'eraser') {
+        drawColor = '#FFFFFF'; // стираем белым
+        compositeOp = 'source-over'; // рисуем белым поверх
+        globalAlpha = 1.0;
+      }
+
+      context.save();
+      context.lineCap = 'round';
+      context.lineJoin = 'round';
+      context.globalCompositeOperation = compositeOp;
+      context.globalAlpha = globalAlpha;
+
+      // В зависимости от инструмента настраиваем стиль
+      switch (tool) {
+        case 'pen':
+          // Гладкое перо с легким сглаживанием
+          context.strokeStyle = drawColor;
+          context.lineWidth = size;
+          context.beginPath();
+          context.moveTo(fromX, fromY);
+          context.lineTo(toX, toY);
+          context.stroke();
+          break;
+
+        case 'pencil':
+          // Карандаш: текстура с помощью множества мелких точек и неровных линий
+          context.strokeStyle = drawColor;
+          context.lineWidth = size * 0.7;
+          // Рисуем основную линию с шумом
+          context.beginPath();
+          context.moveTo(fromX, fromY);
+          context.lineTo(toX, toY);
+          context.stroke();
+          // Добавляем текстурные точки вдоль линии
+          context.fillStyle = drawColor;
+          const steps = Math.max(2, Math.floor(size * 0.8));
+          for (let i = 0; i <= steps; i++) {
+            const t = i / steps;
+            const px = fromX + (toX - fromX) * t + (Math.random() - 0.5) * size * 0.9;
+            const py = fromY + (toY - fromY) * t + (Math.random() - 0.5) * size * 0.9;
+            context.beginPath();
+            context.arc(px, py, size * 0.18 * (0.6 + Math.random() * 0.7), 0, Math.PI * 2);
+            context.fill();
+          }
+          break;
+
+        case 'watercolor':
+          // Акварель: полупрозрачная, мягкая, с размытыми краями
+          context.globalAlpha = 0.3; // низкая непрозрачность для наслоения
+          context.strokeStyle = drawColor;
+          context.lineWidth = size * 1.2;
+          context.shadowColor = drawColor;
+          context.shadowBlur = size * 0.7;
+          context.beginPath();
+          context.moveTo(fromX, fromY);
+          context.lineTo(toX, toY);
+          context.stroke();
+          // Дополнительный мягкий слой
+          context.shadowBlur = size * 0.5;
+          context.globalAlpha = 0.25;
+          context.stroke();
+          break;
+
+        case 'airbrush':
+          // Аэрограф: множество полупрозрачных точек распыления
+          context.fillStyle = drawColor;
+          const sprayDensity = Math.max(10, Math.floor(size * 1.8));
+          for (let j = 0; j < sprayDensity; j++) {
+            const offsetX = (Math.random() - 0.5) * size * 1.6;
+            const offsetY = (Math.random() - 0.5) * size * 1.6;
+            const dist = Math.sqrt(offsetX*offsetX + offsetY*offsetY);
+            if (dist > size * 0.9) continue; // ограничиваем область
+            const alpha = 0.15 + Math.random() * 0.25;
+            context.globalAlpha = alpha;
+            context.beginPath();
+            context.arc(toX + offsetX, toY + offsetY, size * 0.25 * (0.4 + Math.random()*0.6), 0, 2*Math.PI);
+            context.fill();
+          }
+          context.globalAlpha = 1.0;
+          break;
+
+        case 'calligraphy':
+          // Каллиграфическое перо: наклонная форма, зависит от направления
+          const angle = Math.atan2(toY - fromY, toX - fromX);
+          const perpAngle = angle + Math.PI/2;
+          const tipLength = size * 0.9;
+          const tipWidth = size * 0.28;
+          
+          context.fillStyle = drawColor;
+          context.strokeStyle = drawColor;
+          context.lineWidth = tipWidth;
+          
+          // Рисуем вытянутый эллипс, ориентированный по направлению
+          context.save();
+          context.translate(toX, toY);
+          context.rotate(angle);
+          context.beginPath();
+          context.ellipse(0, 0, tipLength*0.7, tipWidth*1.1, 0, 0, Math.PI*2);
+          context.fill();
+          context.restore();
+          
+          // Также соединяем линией для непрерывности
+          context.lineWidth = tipWidth * 1.7;
+          context.strokeStyle = drawColor;
+          context.beginPath();
+          context.moveTo(fromX, fromY);
+          context.lineTo(toX, toY);
+          context.stroke();
+          break;
+
+        case 'marker':
+          // Маркер: полупрозрачный, широкий, с эффектом наслоения
+          context.globalAlpha = 0.5;
+          context.strokeStyle = drawColor;
+          context.lineWidth = size * 1.1;
+          context.shadowBlur = 2;
+          context.shadowColor = drawColor;
+          context.beginPath();
+          context.moveTo(fromX, fromY);
+          context.lineTo(toX, toY);
+          context.stroke();
+          // Второй проход для плотности
+          context.globalAlpha = 0.35;
+          context.lineWidth = size * 0.9;
+          context.stroke();
+          break;
+
+        case 'eraser':
+          // Ластик рисует белым цветом, размер как у кисти
+          context.strokeStyle = '#FFFFFF';
+          context.lineWidth = size;
+          context.beginPath();
+          context.moveTo(fromX, fromY);
+          context.lineTo(toX, toY);
+          context.stroke();
+          break;
+
+        default:
+          // fallback перо
+          context.strokeStyle = drawColor;
+          context.lineWidth = size;
+          context.beginPath();
+          context.moveTo(fromX, fromY);
+          context.lineTo(toX, toY);
+          context.stroke();
+      }
+      
+      context.restore();
+    }
+
+    // ---------- ПРИВЯЗКА СОБЫТИЙ ----------
+    // Мышь
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', drawMove);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseleave', stopDrawing);
+
+    // Сенсорные события
+    canvas.addEventListener('touchstart', startDrawing, { passive: false });
+    canvas.addEventListener('touchmove', drawMove, { passive: false });
+    canvas.addEventListener('touchend', stopDrawing);
+    canvas.addEventListener('touchcancel', stopDrawing);
+
+    // Предотвращаем нежелательное поведение на мобильных
+    canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    // Инициализация
+    initializeCanvas();
+    // Установим начальный размер в дисплей
+    sizeDisplay.textContent = brushSize;
+    brushSizeInput.value = brushSize;
+    colorPicker.value = brushColor;
+  })();
+</script>
+</body>
+</html>
